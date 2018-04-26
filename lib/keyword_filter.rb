@@ -2,22 +2,25 @@
 
 require "keyword_filter/version"
 
-module KeywordFilter
-  extend self
-
-  #
-  # 广告词, 敏感词过滤, 采用 DFA 算法
-  #
-  attr_reader :dict
-
+class String
   SPECIFIC_SYMBOL = %w(
     ~ ! @ # $ % ^ & * ( ) _ - + = [ ] { } | < > / ? ; : ' " , . \ |
     。 ， 《 》 ？ 、 「 」 【 】 （ ） ； ‘ ’ “ ” ： ·
   ).freeze
 
-  def clear
-    @dict = {}
+  def is_ignore_word?
+    self.empty? || self == ' ' || SPECIFIC_SYMBOL.include?(self)
   end
+end
+
+module KeywordFilter
+  extend self
+  #
+  # 广告词, 敏感词过滤, 采用 DFA 算法
+  #
+  attr_reader :dict
+
+  alias_method :tree, :dict
 
   def add(*words)
     @dict ||= { is_end: false }
@@ -37,6 +40,7 @@ module KeywordFilter
         end
       end
     end
+    true
   end
 
   def filtered_words
@@ -45,21 +49,18 @@ module KeywordFilter
 
   def filter(text)
     filtered_words.clear
-    tmp_dict = self.dict
 
-    text.each_char do |ch|
-      next if ch.blank? || ch == ' ' || SPECIFIC_SYMBOL.include?(ch)
-      if next_dict = tmp_dict[ch]
-        filtered_words << ch
-        return true if next_dict[:is_end]
-        tmp_dict = next_dict
-      else
-        filtered_words.clear
-        tmp_dict = self.dict
+    (0..text.length - 1).each do |i|
+      tmp_dict = self.dict
+      text[i..-1].each_char do |ch|
+        next if ch.is_ignore_word?
         if next_dict = tmp_dict[ch]
           filtered_words << ch
           return true if next_dict[:is_end]
           tmp_dict = next_dict
+        else
+          filtered_words.clear
+          break
         end
       end
     end

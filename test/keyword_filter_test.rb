@@ -3,11 +3,11 @@ require "test_helper"
 class KeywordFilterTest < Minitest::Test
 
   def setup
-    KeywordFilter.add('加微信', '加威杏', '加薇信')
+    KeywordFilter.add('加微信', '交易', '微信交易吗')
   end
 
   def teardown
-    KeywordFilter.clear
+    KeywordFilter.dict.clear
   end
 
   def test_that_it_has_a_version_number
@@ -21,5 +21,10 @@ class KeywordFilterTest < Minitest::Test
 
     result = KeywordFilter.filter("微信")
     assert !result
+    result = KeywordFilter.filter("交")
+    assert !result
+
+    result = KeywordFilter.filter("微信交易号")
+    assert result
   end
 end
